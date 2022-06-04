@@ -29,6 +29,24 @@ app.use(express.static(path.join(__dirname, "public"))); //To serve static files
 app.use(express.static(path.join(__dirname, "dist")));
 //remote:
 // app.use(express.static(path.join(__dirname, '../assignment-3-3-basic/dist')));
+
+// DB connection
+const{
+  createPool
+} = require('mysql')
+const DB = createPool({
+  host:"localhost",
+  user:"root",
+  password:"password",
+  database:"myrecipe",
+  connectionLimit:5
+})
+
+// DB.query("select * from users",(err,result,fields)=>{
+//   if(err){return console.log(err)}
+//   return console.log(result)
+// })
+
 app.get("/",function(req,res)
 { 
   //remote: 
@@ -49,7 +67,7 @@ const corsConfig = {
 app.use(cors(corsConfig));
 app.options("*", cors(corsConfig));
 
-var port = process.env.PORT || "80"; //local=3000 remote=80
+var port = process.env.PORT || "3000"; //local=3000 remote=80
 //#endregion
 const user = require("./routes/user");
 const recipes = require("./routes/recipes");
@@ -119,22 +137,29 @@ app.post("/users/register", (req, res) => {
 
 //login
 app.post("/users/login", (req, res) => {
+  var Luser;
   //check that username exists
-  if (!DB.find((x) => x.username === req.body.username)) // fix DB to real DB
-    throw { status: 401, message: "One of the dietalis incorrect" };
-  //check that the passwaord is correct
-  let user = DB.find((x) => x.username === req.body.username); // fix DB to real DB
-  if (req.body.password === user.password) {
-    res.status(200).send({ message: "login succedded" });
-  } else {
-    throw { status: 401, message: "One of the dietalis incorrect" };
-  }
-});
+  DB.query("select * from users where userName = ?",[req.body.userName],(err,result,fields)=>{
+    if(err){return console.log(err)}
+    Luser = result[0];
+    if (Luser.userName != req.body.userName)
+      throw { status: 401, message: "One of the dietalis incorrect" };
+    //check that the passwaord is correct
+    if (req.body.password === Luser.password) {
+      res.status(200).send({ message: "login succedded" });
+    } else {
+      throw { status: 401, message: "One of the dietalis incorrect" };
+    }
+  })
+})
 
 
 const server = app.listen(port, () => {
   console.log(`Server listen on port ${port}`);
 });
+
+
+
 
 process.on("SIGINT", function () {
   if (server) {

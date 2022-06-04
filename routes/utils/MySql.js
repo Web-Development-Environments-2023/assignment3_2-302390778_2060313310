@@ -4,9 +4,9 @@ require("dotenv").config();
 
 const config={
 connectionLimit:4,
-  host: process.env.host,//"localhost"
-  user: process.env.user,//"root"
-  password: "pass_root@123",
+  host: "localhost",//"localhost"
+  user: "root",//"root"
+  password: "password",
   database:"mydb"
 }
 const pool = new mysql.createPool(config);
@@ -15,7 +15,7 @@ const connection =  () => {
   return new Promise((resolve, reject) => {
   pool.getConnection((err, connection) => {
     if (err) reject(err);
-    console.log("MySQL pool connected: threadId " + connection.threadId);
+    // console.log("MySQL pool connected: threadId " + connection.threadId);
     const query = (sql, binding) => {
       return new Promise((resolve, reject) => {
          connection.query(sql, binding, (err, result) => {
