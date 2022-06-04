@@ -87,6 +87,49 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500).send({ message: err.message, success: false });
 });
 
+//register
+app.post("/users/register", (req, res) => {
+  const {
+    username,
+    firstname,
+    lastname,
+    country,
+    password,
+    email,
+    profilePic,
+  } = req.body;
+
+  let user = {
+    id: DB.length,// fix DB to real DB
+    username: username,
+    firstname: firstname,
+    lastname: lastname,
+    country: country,
+    email: email,
+    profilePic: profilePic,
+    password: password
+  };
+
+  if (DB.find((x) => x.username === user.username)) // fix DB to real DB
+    throw { status: 400, message: "username isnt available" };
+
+  DB.push(user); // fix DB to real DB
+  res.status(201).send({ message: "user created" });
+});
+
+//login
+app.post("/users/login", (req, res) => {
+  //check that username exists
+  if (!DB.find((x) => x.username === req.body.username)) // fix DB to real DB
+    throw { status: 401, message: "One of the dietalis incorrect" };
+  //check that the passwaord is correct
+  let user = DB.find((x) => x.username === req.body.username); // fix DB to real DB
+  if (req.body.password === user.password) {
+    res.status(200).send({ message: "login succedded" });
+  } else {
+    throw { status: 401, message: "One of the dietalis incorrect" };
+  }
+});
 
 
 const server = app.listen(port, () => {
