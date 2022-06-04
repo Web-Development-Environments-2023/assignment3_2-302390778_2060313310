@@ -28,8 +28,10 @@ router.post("/Register", async (req, res, next) => {
       user_details.password,
       parseInt(process.env.bcrypt_saltRounds)
     );
+    let maxID = 0;
+    maxID = await DButils.execQuery("SELECT MAX(user_id) from users;")
     await DButils.execQuery(
-      `INSERT INTO users VALUES ('${String(users.length+1)}','${user_details.userName}', '${user_details.firstName}', '${user_details.lastName}',
+      `INSERT INTO users VALUES ('${maxID[0]['MAX(user_id)']+1}','${user_details.userName}', '${user_details.firstName}', '${user_details.lastName}',
       '${user_details.country}', '${hash_password}', '${user_details.email}')`
     );
     res.status(201).send({ message: "user created", success: true });
