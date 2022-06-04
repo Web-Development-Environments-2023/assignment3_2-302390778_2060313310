@@ -15,7 +15,7 @@ const connection =  () => {
   return new Promise((resolve, reject) => {
   pool.getConnection((err, connection) => {
     if (err) reject(err);
-    // console.log("MySQL pool connected: threadId " + connection.threadId);
+    console.log("MySQL pool connected: threadId " + connection.threadId);
     const query = (sql, binding) => {
       return new Promise((resolve, reject) => {
          connection.query(sql, binding, (err, result) => {
