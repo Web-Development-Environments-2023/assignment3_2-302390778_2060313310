@@ -30,22 +30,6 @@ app.use(express.static(path.join(__dirname, "dist")));
 //remote:
 // app.use(express.static(path.join(__dirname, '../assignment-3-3-basic/dist')));
 
-// DB connection
-const{
-  createPool
-} = require('mysql')
-const DB = createPool({
-  host:"localhost",
-  user:"root",
-  password:"password",
-  database:"myrecipe",
-  connectionLimit:5
-})
-
-// DB.query("select * from users",(err,result,fields)=>{
-//   if(err){return console.log(err)}
-//   return console.log(result)
-// })
 
 app.get("/",function(req,res)
 { 

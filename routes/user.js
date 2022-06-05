@@ -27,7 +27,10 @@ router.use(async function (req, res, next) {
 router.post('/favorites', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
-    const recipe_id = req.body.recipeId;
+    const recipe_id = req.body.recipe_id;
+    users = await DButils.execQuery(`SELECT * from FavoriteRecipes where user_id = '${user_id}' and recipe_id = '${recipe_id}'`);
+    if (users.find((x) => x.username === user_details.userName))
+      throw { status: 409, message: "Username taken" };
     await user_utils.markAsFavorite(user_id,recipe_id);
     res.status(200).send("The Recipe successfully saved as favorite");
     } catch(error){
