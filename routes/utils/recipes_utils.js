@@ -18,6 +18,16 @@ async function getRecipeInformation(recipe_id) {
     });
 }
 
+async function getRandomRecipies() {
+    return await axios.get(`${api_domain}/random`, {
+        params: {
+            limitLicense: true,
+            number:3,
+            apiKey: process.env.spooncular_apiKey
+        }
+    });
+}
+
 
 
 async function getRecipeDetails(recipe_id) {
@@ -37,9 +47,51 @@ async function getRecipeDetails(recipe_id) {
     }
 }
 
+async function getRandomRecipiesDetails() {
+    let recipe_info = await getRandomRecipies();
+    let recipes = []
+    recipes[0] = {
+        id:recipe_info.data.recipes[0].id,
+        title: recipe_info.data.recipes[0].title,
+        readyInMinutes: recipe_info.data.recipes[0].readyInMinutes,
+        image: recipe_info.data.recipes[0].image,
+        popularity: recipe_info.data.recipes[0].aggregateLikes,
+        vegan: recipe_info.data.recipes[0].vegan,
+        vegetarian: recipe_info.data.recipes[0].vegetarian,
+        glutenFree: recipe_info.data.recipes[0].glutenFree,
+        
+    }
+    recipes[1] = {
+        id:recipe_info.data.recipes[1].id,
+        title: recipe_info.data.recipes[1].title,
+        readyInMinutes: recipe_info.data.recipes[1].readyInMinutes,
+        image: recipe_info.data.recipes[1].image,
+        popularity: recipe_info.data.recipes[1].aggregateLikes,
+        vegan: recipe_info.data.recipes[1].vegan,
+        vegetarian: recipe_info.data.recipes[1].vegetarian,
+        glutenFree: recipe_info.data.recipes[1].glutenFree,
+        
+    }
+    recipes[2] = {
+        id:recipe_info.data.recipes[2].id,
+        title: recipe_info.data.recipes[2].title,
+        readyInMinutes: recipe_info.data.recipes[2].readyInMinutes,
+        image: recipe_info.data.recipes[2].image,
+        popularity: recipe_info.data.recipes[2].aggregateLikes,
+        vegan: recipe_info.data.recipes[2].vegan,
+        vegetarian: recipe_info.data.recipes[2].vegetarian,
+        glutenFree: recipe_info.data.recipes[2].glutenFree,
+        
+    }
+    return recipes
+
+}
+
+
 
 
 exports.getRecipeDetails = getRecipeDetails;
+exports.getRandomRecipiesDetails = getRandomRecipiesDetails;
 
 
 
