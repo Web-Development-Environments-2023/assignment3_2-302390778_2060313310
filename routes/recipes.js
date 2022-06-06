@@ -20,11 +20,18 @@ router.get("/getRecipeDescription/:recipeId", async (req, res, next) => {
   }
 });
 
+/**
+ * This path returns a 3 full details of random recipes 
+ */
 router.get("/getRandomRecipes", async (req, res, next) => {
   const recipe = await recipes_utils.getRandomRecipiesDetails();
   res.status(200).send({ message: recipe, success: true });
 });
 
+
+/**
+ * This path add recipe to DB
+ */
 router.post("/addRecipe", async (req, res, next) => {
   try{
     let recipe = {
@@ -40,7 +47,7 @@ router.post("/addRecipe", async (req, res, next) => {
     maxID = await DButils.execQuery("SELECT MAX(id) from recipes;")
     await DButils.execQuery(
       `INSERT INTO recipes VALUES ('${maxID[0]['MAX(id)']+1}','${recipe.name}','${recipe.timeToMake}', '${0}', '${recipe.whoCanEatVegOrNot}', '${recipe.glutenFree}',
-      '${recipe.ingridients}', '${recipe.instructions}', '${recipe.numberOfMeals}')`
+      '${recipe.ingridients}', '${recipe.instructions}', '${recipe.numberOfMeals}', '${""}')`
       );
     res.status(201).send({ message: "recipe was added", success: true });
   }
@@ -49,7 +56,6 @@ router.post("/addRecipe", async (req, res, next) => {
     res.status(403).send({ message: "couldn`t add recipe to DB", success: false });
   }
 });
-
 
 
 module.exports = router;
