@@ -58,15 +58,16 @@ async function mapRecipesDetails(recipeInfo,userId){
 }
 
 async function getRecipeDetails(recipeId,userId) {
-    let recipe_info = await getRecipeInformation(recipeId);
-    const final_list = await Promise.all( recipe_info.data.recipes.map(function(x){return mapRecipesDetails(x,userId);}));
+    let recipeInfo = await getRecipeInformation(recipeId);
+    console.log(recipeInfo.data)
+    const final_list = await Promise.all( [recipeInfo.data].map(function(x){return mapRecipesDetails(x,userId);}));
     return final_list;
 }
 
 
 async function getRandomRecipiesDetails(userId) {
-    let recipe_info = await getRandomRecipies();
-    const final_list = await Promise.all( recipe_info.data.recipes.map(function(x){return mapRecipesDetails(x,userId);}));
+    let recipeInfo = await getRandomRecipies();
+    const final_list = await Promise.all( recipeInfo.data.recipes.map(function(x){return mapRecipesDetails(x,userId);}));
     return final_list;
 
 }
@@ -98,10 +99,10 @@ async function addRecipe(reqBody){
 
 async function getFullRecipe(recipeId,userId){
     let recipe_info = await getRecipeInformation(recipeId);
-    let { id, title, readyInMinutes, aggregateLikes, vegan, glutenFree,instructions,servings } = recipe_info.data;
+    let { id, title, readyInMinutes, aggregateLikes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients } = recipe_info.data;
     let userHasWatch = true;
     const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${userId}'`)
-    if (userWatch.length < 1){
+    if (userWatch.length < 1 && userId != null){
         await DButils.execQuery(`INSERT INTO userHasWatch VALUES ('${userId}','${recipeId}')`)
     }
     let favoriterecipes;
@@ -116,7 +117,8 @@ async function getFullRecipe(recipeId,userId){
         name: title,
         timeToMake: readyInMinutes,
         popularity: aggregateLikes,
-        vegOrNot: vegan,
+        vegan: vegan,
+        vegetarian: vegetarian,
         wasWatchedByUserBefore: userHasWatch,
         wasSavedByUser: favoriterecipes,
         glutenFree: glutenFree,
