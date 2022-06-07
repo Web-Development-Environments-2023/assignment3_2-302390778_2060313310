@@ -33,7 +33,7 @@ router.get("/getRandomRecipes", async (req, res, next) => {
  * This path returns a 3 full details of random recipes 
  */
  router.get("/getRecipeFromClick", async (req, res, next) => {
-  const recipe = await recipes_utils.getFullRecipe(req.params.recipeId,req.session.user_id);
+  const recipe = await recipes_utils.getFullRecipe(req.query.recipeId,req.session.user_id);
   res.status(200).send({ message: recipe, success: true });
 });
 
