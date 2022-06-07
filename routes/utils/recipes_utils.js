@@ -30,6 +30,17 @@ async function getRandomRecipies() {
     });
 }
 
+async function searchRecipe(query) {
+    return await axios.get(`${api_domain}/complexSearch`, {
+        params: {
+            query: query,
+            number:process.env.num_of_search_results,
+            limitLicense: true,
+            apiKey: process.env.spooncular_apiKey
+        }
+    });
+}
+
 async function mapRecipesDetails(recipeInfo,userId){
     let userHasWatch;
     const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${userId}'`)
@@ -59,7 +70,6 @@ async function mapRecipesDetails(recipeInfo,userId){
 
 async function getRecipeDetails(recipeId,userId) {
     let recipeInfo = await getRecipeInformation(recipeId);
-    console.log(recipeInfo.data)
     const final_list = await Promise.all( [recipeInfo.data].map(function(x){return mapRecipesDetails(x,userId);}));
     return final_list;
 }
@@ -129,6 +139,17 @@ async function getFullRecipe(recipeId,userId){
     }
 }
 
+async function getSearchRecipe(query,userId){
+    let recipesInfo = await searchRecipe(query);
+    recipesInfo = recipesInfo.data.results.map(x => x.id)
+    let final_list = []
+    for (let i = 0; i < recipesInfo.length; i++){
+        let recipeInfo = await getRecipeInformation(recipesInfo[i]);
+        final_list.push(await Promise.all( [recipeInfo.data].map(function(x){return mapRecipesDetails(x,userId);})));
+    }
+    return final_list;
+}
+
 
 
 
@@ -136,6 +157,7 @@ exports.getRecipeDetails = getRecipeDetails;
 exports.getRandomRecipiesDetails = getRandomRecipiesDetails;
 exports.addRecipe = addRecipe;
 exports.getFullRecipe = getFullRecipe;
+exports.get10SearchRecipe = get10SearchRecipe
 
 
 

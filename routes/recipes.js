@@ -37,6 +37,14 @@ router.get("/getRandomRecipes", async (req, res, next) => {
   res.status(200).send({ message: recipe, success: true });
 });
 
+/**
+ * This path returns a 10 most relevant details of recipes depens on a given query 
+ */
+ router.get("/searchForRecipe", async (req, res, next) => {
+  const recipe = await recipes_utils.getSearchRecipe(req.query.query,req.session.user_id);
+  res.status(200).send({ message: recipe, success: true });
+});
+
 
 /**
  * This path add recipe to DB
