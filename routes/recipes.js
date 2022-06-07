@@ -12,7 +12,7 @@ router.get("/", (req, res) => res.send("im here"));
  */
 router.get("/getRecipeDescription/:recipeId", async (req, res, next) => {
   try {
-    const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId);
+    const recipe = await recipes_utils.getRecipeDetails(req.params.recipeId,req.session.user_id);
     res.status(201).send({ message: recipe, success: true });
   } catch (error) {
     next(error);
@@ -24,7 +24,16 @@ router.get("/getRecipeDescription/:recipeId", async (req, res, next) => {
  * This path returns a 3 full details of random recipes 
  */
 router.get("/getRandomRecipes", async (req, res, next) => {
-  const recipe = await recipes_utils.getRandomRecipiesDetails();
+  const recipe = await recipes_utils.getRandomRecipiesDetails(req.session.user_id);
+  res.status(200).send({ message: recipe, success: true });
+});
+
+
+/**
+ * This path returns a 3 full details of random recipes 
+ */
+ router.get("/getRecipeFromClick", async (req, res, next) => {
+  const recipe = await recipes_utils.getFullRecipe(req.params.recipeId,req.session.user_id);
   res.status(200).send({ message: recipe, success: true });
 });
 
@@ -33,29 +42,14 @@ router.get("/getRandomRecipes", async (req, res, next) => {
  * This path add recipe to DB
  */
 router.post("/addRecipe", async (req, res, next) => {
-  try{
-    let recipe = {
-      name: req.body.name,
-      timeToMake: req.body.timeToMake,
-      whoCanEatVegOrNot: req.body.whoCanEatVegOrNot,
-      glutenFree:req.body.glutenFree,
-      ingridients: req.body.ingridients,
-      instructions: req.body.instructions,
-      numberOfMeals: req.body.numberOfMeals
-    }
-    let maxID = 0;
-    maxID = await DButils.execQuery("SELECT MAX(id) from recipes;")
-    await DButils.execQuery(
-      `INSERT INTO recipes VALUES ('${maxID[0]['MAX(id)']+1}','${recipe.name}','${recipe.timeToMake}', '${0}', '${recipe.whoCanEatVegOrNot}', '${recipe.glutenFree}',
-      '${recipe.ingridients}', '${recipe.instructions}', '${recipe.numberOfMeals}', '${""}')`
-      );
+  const succeeded = await recipes_utils.addRecipe(req.body);
+  if (succeeded)
     res.status(201).send({ message: "recipe was added", success: true });
-  }
-  catch (error) {
-    next(error);
+  else
     res.status(403).send({ message: "couldn`t add recipe to DB", success: false });
-  }
 });
+
+
 
 
 module.exports = router;
