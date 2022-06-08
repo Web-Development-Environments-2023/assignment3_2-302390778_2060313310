@@ -33,7 +33,7 @@ router.get("/getRandomRecipes", async (req, res, next) => {
  * This path returns a 3 full details of random recipes 
  */
  router.get("/getRecipeFromClick", async (req, res, next) => {
-  const recipe = await recipes_utils.getFullRecipe(req.query.recipeId,req.session.user_id);
+  const recipe = await recipes_utils.getFullRecipe(parseInt(req.query.recipeId),req.session.user_id);
   res.status(200).send({ message: recipe, success: true });
 });
 
@@ -41,7 +41,7 @@ router.get("/getRandomRecipes", async (req, res, next) => {
  * This path returns a 10 most relevant details of recipes depens on a given query 
  */
  router.get("/searchForRecipe", async (req, res, next) => {
-  const recipe = await recipes_utils.getSearchRecipe(req.query.query,req.session.user_id);
+  const recipe = await recipes_utils.getSearchRecipe(req.query,req.session.user_id);
   res.status(200).send({ message: recipe, success: true });
 });
 

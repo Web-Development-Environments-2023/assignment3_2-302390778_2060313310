@@ -30,10 +30,15 @@ router.post("/Register", async (req, res, next) => {
     );
     let maxID = 0;
     maxID = await DButils.execQuery("SELECT MAX(user_id) from users;")
+    let user_id = maxID[0]['MAX(user_id)']+1;
     await DButils.execQuery(
-      `INSERT INTO users VALUES ('${maxID[0]['MAX(user_id)']+1}','${user_details.userName}', '${user_details.firstName}', '${user_details.lastName}',
+      `INSERT INTO users VALUES ('${user_id}','${user_details.userName}', '${user_details.firstName}', '${user_details.lastName}',
       '${user_details.country}', '${hash_password}', '${user_details.email}')`
     );
+    await DButils.execQuery(
+      `INSERT INTO threeLastWatchesRecipes VALUES ('${user_id}',null, null, null)`
+    );
+
     res.status(201).send({ message: "user created", success: true });
   } catch (error) {
     next(error);
