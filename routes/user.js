@@ -21,6 +21,19 @@ router.use(async function (req, res, next) {
 });
 
 
+// ------------> POST requests
+
+/**
+ * This path save user recipe
+ */
+ router.post("/userRecipes", async (req, res, next) => {
+  const succeeded = await user_utils.addRecipe(req.body,req.session.user_id);
+  if (succeeded)
+    res.status(201).send({ message: "recipe was added", success: true });
+  else
+    res.status(403).send({ message: "couldn`t add recipe to DB", success: false });
+});
+
 /**
  * This path gets body with recipeId and save this recipe in the favorites list of the logged-in user
  */
@@ -28,9 +41,9 @@ router.post('/favorites', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
     const recipe_id = req.body.recipe_id;
-    users = await DButils.execQuery(`SELECT * from FavoriteRecipes where user_id = '${user_id}' and recipe_id = '${recipe_id}'`);
-    if (users.find((x) => x.username === user_details.userName))
-      throw { status: 409, message: "Username taken" };
+    alresdyLiked = await DButils.execQuery(`SELECT * from FavoriteRecipes where user_id = ${user_id} and recipe_id = ${recipe_id}`);
+    if (alresdyLiked.length == 1)
+      throw { status: 403, message: "User already markd this recipe as favorite!" };
     await user_utils.markAsFavorite(user_id,recipe_id);
     res.status(200).send("The Recipe successfully saved as favorite");
     } catch(error){
@@ -38,21 +51,80 @@ router.post('/favorites', async (req,res,next) => {
   }
 })
 
+
+
+// ------------> GET requests
+
 /**
- * This path returns the favorites recipes that were saved by the logged-in user
+ * This path returns the last searched recipe by logged in user.
  */
-router.get('/favorites', async (req,res,next) => {
+router.get('/lastSearch', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
-    const recipes_id = await user_utils.getFavoriteRecipes(user_id);
-    let recipes_id_array = [];
-    recipes_id.map((element) => recipes_id_array.push(element.recipe_id)); //extracting the recipe ids into array
-    const results = await recipe_utils.getRecipesPreview(recipes_id_array);
+    const results = await user_utils.getLastSearch(user_id);
     res.status(200).send(results);
   } catch(error){
     next(error); 
   }
 });
+
+/**
+ * This path returns the 3 last watch recipes that were whatched by the logged-in user
+ */
+ router.get('/threelastWatched', async (req,res,next) => {
+  try{
+    const user_id = req.session.user_id;
+    const recipes_ids = await user_utils.getThreelastWatched(user_id);
+    const results = await recipe_utils.getRecipesDetails(recipes_ids)
+    res.status(200).send(results);
+  } catch(error){
+    next(error); 
+  }
+});
+
+/**
+ * This path returns the favorites recipes that were saved by the logged-in user
+ */
+ router.get('/favorites', async (req,res,next) => {
+  try{
+    const user_id = req.session.user_id;
+    const recipes_ids = await user_utils.getFavoriteRecipes(user_id);
+    const results = await recipe_utils.getRecipesDetails(recipes_ids)
+    res.status(200).send(results);
+  } catch(error){
+    next(error); 
+  }
+});
+
+
+/**
+ * This path get all user recipes
+ */
+router.get('/userRecipes', async (req,res,next) => {
+  try{
+    const user_id = req.session.user_id;
+    const results = await user_utils.getUserRecipes(user_id);
+    res.status(200).send(results);
+  } catch(error){
+    next(error); 
+  }
+});
+
+
+/**
+ * This path get all family recipes
+ */
+router.get('/familyRecipes', async (req,res,next) => {
+  try{
+    const user_id = req.session.user_id;
+    const results = await user_utils.getFamilyRercipe(user_id);
+    res.status(200).send(results);
+  } catch(error){
+    next(error); 
+  }
+});
+
+
 
 
 

@@ -5,6 +5,13 @@ const DButils = require("../routes/utils/DButils");
 const bcrypt = require("bcrypt");
 
 
+
+
+// ------------> POST requests
+
+/**
+ * This path handle registerations request
+ */
 router.post("/Register", async (req, res, next) => {
   try {
     // parameters exists
@@ -46,6 +53,9 @@ router.post("/Register", async (req, res, next) => {
 });
 
 
+/**
+ * This path authenticate the logged-in user details, and set the cookie
+ */
 router.post("/Login", async (req, res, next) => {
   try {
     // check that username exists
@@ -74,7 +84,9 @@ router.post("/Login", async (req, res, next) => {
   }
 });
 
-
+/**
+ * This path log out the session user, if he logged-in
+ */
 router.post("/Logout", function (req, res) {
   req.session.reset(); // reset the session info --> send cookie when  req.session == undefined!!
   res.send({ success: true, message: "logout succeeded" });

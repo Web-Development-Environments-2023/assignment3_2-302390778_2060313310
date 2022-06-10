@@ -3,6 +3,7 @@ const api_domain = "https://api.spoonacular.com/recipes";
 const MySql = require("../utils/MySql");
 const DButils = require("../utils/DButils");
 const { promise } = require("bcrypt/promises");
+const { NText } = require("mssql");
 
 
 /**
@@ -11,13 +12,34 @@ const { promise } = require("bcrypt/promises");
  */
 
 
-async function getRecipeInformation(recipeId) {
-    return await axios.get(`${api_domain}/${recipeId}/information`, {
-        params: {
-            includeNutrition: false,
-            apiKey: process.env.spooncular_apiKey
-        }
-    });
+// async function getRecipeInformation(recipeId) {
+//     try{
+//         return await axios.get(`${api_domain}/${recipeId}/information`, {
+//             params: {
+//                 includeNutrition: false,
+//                 apiKey: process.env.spooncular_apiKey
+//             }
+//         });
+//     }
+//     catch(error){
+//         next(error);
+//     }
+// }
+
+async function getRecipesInformation(ids) {
+    try{
+        return await axios.get(`${api_domain}/informationBulk`, {
+            params: {
+                ids: ids,
+                includeNutrition: false,
+                apiKey: process.env.spooncular_apiKey
+            }
+        });
+    }
+    catch(error){
+        throw "Failed to get informationBulk api. Error message: " + error.message
+    }
+
 }
 
 async function getRandomRecipies() {
@@ -31,6 +53,7 @@ async function getRandomRecipies() {
 }
 
 async function searchRecipe(query,amount,cuisine,diet,intolerances) {
+    if(amount == null) amount = 5;
     return await axios.get(`${api_domain}/complexSearch`, {
         params: {
             query: query,
@@ -71,43 +94,50 @@ async function mapRecipesDetails(recipeInfo,userId){
     }
 }
 
-async function getRecipeDetails(recipeId,userId) {
-    let recipeInfo = await getRecipeInformation(recipeId);
-    const final_list = await Promise.all( [recipeInfo.data].map(function(x){return mapRecipesDetails(x,userId);}));
-    return final_list;
+// async function getRecipeDetails(recipeId,userId) {
+//     try{
+//         let recipeInfo = await getRecipesInformation(recipeId)[0];
+//         const final_list = await Promise.all( [recipeInfo.data].map(function(x){return mapRecipesDetails(x,userId);}));
+//         return final_list;
+    
+//     }
+//     catch(err){
+//         throw err
+//     }
+// }
+
+async function getRecipesDetails(ids,userId){
+    try{
+        let string_ids = ""
+        let c = ','
+        if (typeof ids != "string"){
+            ids.forEach(e => {
+                if( e === ids[ids.length - 1]){c=''}
+                string_ids += String(e) + c
+            });
+        }
+        else{
+            string_ids = ids
+        }
+        
+        let recipeInfo = await getRecipesInformation(string_ids);
+        const final_list = await Promise.all( recipeInfo.data.map(function(x){return mapRecipesDetails(x,userId);}));
+        return final_list;
+    }
+    
+    catch(err){
+        throw err
+    }
 }
 
 
 async function getRandomRecipiesDetails(userId) {
     let recipeInfo = await getRandomRecipies();
-    const final_list = await Promise.all( recipeInfo.data.recipes.map(function(x){return mapRecipesDetails(x,userId);}));
+    const final_list = await Promise.all(recipeInfo.data.recipes.map(function(x){return mapRecipesDetails(x,userId);}));
     return final_list;
 
 }
 
-async function addRecipe(reqBody){
-    try{
-        let recipe = {
-        name: reqBody.name,
-        timeToMake: reqBody.timeToMake,
-        whoCanEatVegOrNot: reqBody.whoCanEatVegOrNot,
-        glutenFree:reqBody.glutenFree,
-        ingridients: reqBody.ingridients,
-        instructions: reqBody.instructions,
-        numberOfMeals: reqBody.numberOfMeals
-        }
-        let maxID = 0;
-        maxID = await DButils.execQuery("SELECT MAX(id) from recipes;")
-        await DButils.execQuery(
-        `INSERT INTO recipes VALUES ('${maxID[0]['MAX(id)']+1}','${recipe.name}','${recipe.timeToMake}', '${0}', '${recipe.whoCanEatVegOrNot}', '${recipe.glutenFree}',
-        '${recipe.ingridients}', '${recipe.instructions}', '${recipe.numberOfMeals}', '${""}')`
-        );
-        return true;
-    }
-    catch (error) {
-        return false;
-    }
-}
 
 async function updateThreeLastWatches(user_id, rep_id){
     if (user_id == null) {return;}
@@ -146,8 +176,9 @@ async function updateThreeLastWatches(user_id, rep_id){
 
 
 async function getFullRecipe(recipeId,userId){
-    let recipeInfo = await getRecipeInformation(String(recipeId));
-    let { id, title, readyInMinutes, aggregateLikes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients } = recipeInfo.data;
+
+    let recipeInfo = await getRecipesInformation(String(recipeId));
+    let { id, title, readyInMinutes, aggregateLikes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients } = recipeInfo.data[0];
     let userHasWatch = true;
     const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${userId}' and recipe_id='${recipeId}'`)
     if (userWatch.length < 1 && userId != null){
@@ -160,40 +191,55 @@ async function getFullRecipe(recipeId,userId){
         favoriterecipes = false;
     return {
         id: id,
-        name: title,
-        timeToMake: readyInMinutes,
-        popularity: aggregateLikes,
+        title: title,
+        readyInMinutes: readyInMinutes,
+        aggregateLikes: aggregateLikes,
         vegan: vegan,
         vegetarian: vegetarian,
-        wasWatchedByUserBefore: userHasWatch,
-        wasSavedByUser: favoriterecipes,
+        userHasWatch: userHasWatch,
+        favoriterecipes: favoriterecipes,
         glutenFree: glutenFree,
-        ingridients: extendedIngredients,
+        extendedIngredients: extendedIngredients,
         instructions: instructions,
-        numberOfMeals: servings
-        
+        servings: servings
     }
 }
 
 async function getSearchRecipe(req,userId){
-    let recipesInfo = await searchRecipe(req.query,parseInt(req.amount),req.cuisine,req.diet,req.intolerances);
+    if(!userId){ await updateLastSearch(req, userId)}
+    let recipesInfo = await searchRecipe(req.query,parseInt(req.number),req.cuisine,req.diet,req.intolerances);
     recipesInfo = recipesInfo.data.results.map(x => x.id)
+    let string_ids = ""
+    let c = ','
+    recipesInfo.forEach(e => {
+        if( e === recipesInfo[recipesInfo.length - 1]){c=''}
+        string_ids += String(e) + c
+    });
     let final_list = []
-    for (let i = 0; i < recipesInfo.length; i++){
-        let recipeInfo = await getRecipeInformation(recipesInfo[i]);
-        final_list.push(await Promise.all( [recipeInfo.data].map(function(x){return mapRecipesDetails(x,userId);})));
+    let recipeInfo = await getRecipesInformation(string_ids);
+    final_list.push(await Promise.all( recipeInfo.data.map(function(x){return mapRecipesDetails(x,userId);})));
+    return final_list[0];
+}
+
+async  function updateLastSearch(req, userId){
+    const userWatch = await DButils.execQuery(`select user_id from lastsearch where user_id=${userId}`)
+    let q;
+    if (userWatch.length > 0){
+        q = `UPDATE lastsearch SET query = '${req.query}' WHERE user_id = ${userId};`
+        
     }
-    return final_list;
+    else{
+        q = `INSERT INTO lastsearch VALUES (${userId},'${req.query}')`
+    }
+    await DButils.execQuery(q)
 }
 
 
-
-
-exports.getRecipeDetails = getRecipeDetails;
 exports.getRandomRecipiesDetails = getRandomRecipiesDetails;
-exports.addRecipe = addRecipe;
 exports.getFullRecipe = getFullRecipe;
-exports.getSearchRecipe = getSearchRecipe
+exports.getSearchRecipe = getSearchRecipe;
+exports.getRecipesInformation = getRecipesInformation;
+exports.getRecipesDetails = getRecipesDetails;
 
 
 

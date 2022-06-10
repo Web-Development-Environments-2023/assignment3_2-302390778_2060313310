@@ -69,7 +69,7 @@ app.use(function (req, res, next) {
         }
         next();
       })
-      .catch((error) => next());
+      .catch((error) => next(error));
   } else {
     next();
   }
