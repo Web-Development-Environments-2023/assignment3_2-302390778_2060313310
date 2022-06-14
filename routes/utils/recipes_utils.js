@@ -26,6 +26,13 @@ const { NText } = require("mssql");
 //     }
 // }
 
+
+// -----------> outer API spoonacular
+
+
+/**
+ * This function returns information of a given recipes.
+ */
 async function getRecipesInformation(ids) {
     try{
         return await axios.get(`${api_domain}/informationBulk`, {
@@ -42,6 +49,9 @@ async function getRecipesInformation(ids) {
 
 }
 
+/**
+ * This function returns IDs of 3 random recipes.
+ */
 async function getRandomRecipies() {
     return await axios.get(`${api_domain}/random`, {
         params: {
@@ -52,6 +62,9 @@ async function getRandomRecipies() {
     });
 }
 
+/**
+ * This function returns X relevant recipes for a given query, when X is can be 5/10/15 (default X=5).
+ */
 async function searchRecipe(query,amount,cuisine,diet,intolerances) {
     if(amount == null) amount = 5;
     return await axios.get(`${api_domain}/complexSearch`, {
@@ -67,15 +80,23 @@ async function searchRecipe(query,amount,cuisine,diet,intolerances) {
     });
 }
 
-async function mapRecipesDetails(recipeInfo,userId){
+
+
+
+// -------------> Helpers functions to support the recipe domain
+
+/**
+ * This function prepare the needed attributes for the preview of a given recipe information and returns it.
+ */
+async function mapRecipesDetails(recipeInfo, user_id){
     let userHasWatch;
-    const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${userId}'`)
+    const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${user_id}'`)
     if (userWatch.length < 1)
         userHasWatch = false;
     else
         userHasWatch = true;
     let favoriterecipes;
-    const userFavorite = await DButils.execQuery(`select user_id from favoriterecipes where user_id='${userId}'`)
+    const userFavorite = await DButils.execQuery(`select user_id from favoriterecipes where user_id='${user_id}'`)
     if (userFavorite.length < 1)
         favoriterecipes = false;
     else
@@ -106,8 +127,13 @@ async function mapRecipesDetails(recipeInfo,userId){
 //     }
 // }
 
+
+/**
+ * This function returns the preview information of a given recipes, and more details about the user that request this recipe.
+ */
 async function getRecipesDetails(ids,userId){
     try{
+        //  concate ids as a string for the outer API
         let string_ids = ""
         let c = ','
         if (typeof ids != "string"){
@@ -130,7 +156,9 @@ async function getRecipesDetails(ids,userId){
     }
 }
 
-
+/**
+ * This function returns the preview information of a 3 random recipes, and more details about the user that request this recipe.
+ */
 async function getRandomRecipiesDetails(userId) {
     let recipeInfo = await getRandomRecipies();
     const final_list = await Promise.all(recipeInfo.data.recipes.map(function(x){return mapRecipesDetails(x,userId);}));
@@ -138,7 +166,9 @@ async function getRandomRecipiesDetails(userId) {
 
 }
 
-
+/**
+ * This function get new viewed recipie_id by the givan user_id and update the threeLastWatchesRecipes table.
+ */
 async function updateThreeLastWatches(user_id, rep_id){
     if (user_id == null) {return;}
     let threeRecipes = await DButils.execQuery(`select * from threeLastWatchesRecipes where user_id='${user_id}'`)
@@ -174,30 +204,36 @@ async function updateThreeLastWatches(user_id, rep_id){
       await DButils.execQuery(q)
 }
 
-
+/**
+ * This function returns the full information of a given recipe id.
+ */
 async function getFullRecipe(recipeId,userId){
-
     let recipeInfo = await getRecipesInformation(String(recipeId));
+    //  extracts attributes
     let { id, title, readyInMinutes, aggregateLikes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients } = recipeInfo.data[0];
+    // check if user_id watched the recipe
     let userHasWatch = true;
     const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${userId}' and recipe_id='${recipeId}'`)
     if (userWatch.length < 1 && userId != null){
+        // user_id watch the recipe_id for the first time, need to update the userHasWatch table
         await DButils.execQuery(`INSERT INTO userHasWatch VALUES ('${userId}','${recipeId}')`)
     }
     await updateThreeLastWatches(userId, recipeId)
+    // check if user_id liked the recipe 
     let favoriterecipes = true;
     const userFavorite = await DButils.execQuery(`select user_id from favoriterecipes where user_id='${userId}'`)
     if (userFavorite.length < 1)
+        // user_id didnt liked the recipe_id already
         favoriterecipes = false;
     return {
         id: id,
         title: title,
         readyInMinutes: readyInMinutes,
-        aggregateLikes: aggregateLikes,
+        popularity: aggregateLikes,
         vegan: vegan,
         vegetarian: vegetarian,
-        userHasWatch: userHasWatch,
-        favoriterecipes: favoriterecipes,
+        wasWatchedByUserBefore: userHasWatch,
+        wasSavedByUser: favoriterecipes,
         glutenFree: glutenFree,
         extendedIngredients: extendedIngredients,
         instructions: instructions,
@@ -205,9 +241,13 @@ async function getFullRecipe(recipeId,userId){
     }
 }
 
+/**
+ * This function returns the preview information of a X searched recipes (by a given query).
+ */
 async function getSearchRecipe(req,userId){
-    if(!userId){ await updateLastSearch(req, userId)}
-    let recipesInfo = await searchRecipe(req.query,parseInt(req.number),req.cuisine,req.diet,req.intolerances);
+    let number = 5
+    if(userId!=null){ await updateLastSearch(req, userId)}
+    let recipesInfo = await searchRecipe(req.query,number,req.cuisine,req.diet,req.intolerances);
     recipesInfo = recipesInfo.data.results.map(x => x.id)
     let string_ids = ""
     let c = ','
@@ -221,7 +261,10 @@ async function getSearchRecipe(req,userId){
     return final_list[0];
 }
 
-async  function updateLastSearch(req, userId){
+/**
+ * This function get the last query searched by user_id and update the lastsearch table.
+ */
+async function updateLastSearch(req, userId){
     const userWatch = await DButils.execQuery(`select user_id from lastsearch where user_id=${userId}`)
     let q;
     if (userWatch.length > 0){
@@ -240,6 +283,4 @@ exports.getFullRecipe = getFullRecipe;
 exports.getSearchRecipe = getSearchRecipe;
 exports.getRecipesInformation = getRecipesInformation;
 exports.getRecipesDetails = getRecipesDetails;
-
-
 

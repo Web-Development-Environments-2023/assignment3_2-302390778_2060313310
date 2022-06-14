@@ -1,8 +1,14 @@
+---
 openapi: 3.0.0
 info:
-  title: Recipes api
-  description: API for recipes project
-  version: 1.0.1
+  title: Recipe WebSite API
+  description: This is an API for the recipes website
+  contact:
+    email: you@your-company.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
 servers:
 # local:
 - url: "http://127.0.0.1:3000"
@@ -10,175 +16,335 @@ servers:
 # - url: "http://132.72.65.211"
   description: SwaggerHub API Auto Mocking hey
 tags:
-- name: Auth
+- name: auth
   description: All authentication related routes
-- name: Users
-  description: All the user's personal app info
-- name: Recipes
-  description: All reciepes general info
+- name: recipes
+  description: Operations for getting, setting and uploading recipes
+- name: users
+  description: Operations for registeration and login
 paths:
-  /register:
-    post:
-      tags:
-      - Auth
-      summary: A new user from the client is added to the server
-      description: A JSON object contains all the details about the new user.
-      requestBody:
-        description: Inventory item to add
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/User'
-        required: true
-      responses:
-        "201":
-          description: A new user has been added
-        "400":
-          description: wrong input parameters
   /login:
     post:
       tags:
-      - Auth
-      summary: Login an exist user
-      description: An exist user login to the system
+      - auth
+      summary: this method will hundle login proccess.
+      description: By passing in the appropriate options, you can login as a user.
+      operationId: login
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginScheme'
+              $ref: '#/components/schemas/loginBody'
         required: true
       responses:
         "200":
-          description: |
-            User was found in the DB and authenitcated successfully. The session ID is returned in a cookie named `session`.  You should include this cookie in subsequent requests
-          headers:
-            Set-Cookie:
-              style: simple
-              explode: false
-              schema:
-                type: string
-                example: session=87s97sdhgf279293f8w0e9
+          description: user log-in succsefully
         "401":
-          description: Authentication failed
+          description: one of the details is incorrect.
   /logout:
     post:
       tags:
-        - Auth
-      summary: logout a user from the system and delete his cookie
+      - auth
+      summary: this method will hundle logout proccess.
+      description: By passing in the appropriate options, you can logout as a user.
+      operationId: logout
+      parameters:
+      - name: user_id
+        in: cookie
+        required: true
+        schema:
+          type: integer
       responses:
         "200":
-          description: "the user has ben successfully logged out"
-  /users/favorites:
+          description: user log-in succsefully
+        "401":
+          description: one of the details is incorrect.
+  /register:
+    post:
+      tags:
+      - auth
+      summary: this method will add user to the DB
+      description: By passing good parametrs, you can create new user
+      operationId: registerUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/register'
+        required: true
+      responses:
+        "201":
+          description: user register was successful
+        "403":
+          description: user name already exists
+  /recipes/getRandomRecipes:
     get:
       tags:
-      - Users
-      summary: Return the favorite recipes that were saved by user
-      description: Get an array of recipes that were saved by a specific user
+      - recipes
+      summary: this method will show 3 random recipies.
+      description: 3 recipes has been shown.
+      operationId: getRandomRecipe
       responses:
         "200":
-          description: data about the user's favorites recipes returned
+          description: recipes has been loaded.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RecipePreview'
-        "401":
-          description: user is not authorized
-      security:
-      - cookieAuth: []
-    post:
-      tags:
-      - Users
-      summary: save recipe in the favorites list of a user
-      description: save recipe in the favorites list of a user
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                reciepeId:
-                  type: string
-                  description: reciepe's id which the user saved
-                  example: 716429
-      responses:
-        "200":
-          description: The Recipe successfully saved as favorite
-        "401":
-          description: user is not authorized
-      security:
-      - cookieAuth: []
-  /recipes/{recipeId}:
+                  oneOf:
+                  - $ref: '#/components/schemas/recipeDescription'
+        "404":
+          description: recipe not found.
+  /recipes/getRecipeDescription/{recipeId}:
     get:
       tags:
-      - Recipes
-      summary: Return preview details on recipe by his ID
-      description: Return preview details on recipe by his ID
+      - recipes
+      summary: this method will return descreption recipe
+      description: you can search for available recipe in the system
+      operationId: getRecipeDescription
       parameters:
       - name: recipeId
         in: path
-        description: recipe's id
+        description: pass an recipe id to show it
         required: true
-        style: simple
-        explode: false
+        style: form
+        explode: true
         schema:
           type: integer
       responses:
         "200":
-          description: data about the recipe
+          description: search results matching criteria
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecipePreview'
+                $ref: '#/components/schemas/recipeDescription'
         "404":
-          description: recipeId is not exists
+          description: recipe id not found.
+  /recipes/searchForRecipe:
+    get:
+      tags:
+      - recipes
+      summary: Search a recipe
+      description: This method will search a recipe in the db, according to the query specified by the user
+      operationId: searchRecipe
+      parameters:
+      - name: query
+        in: query
+        description: pass an recipe name to search
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: search results matching criteria
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                  - $ref: '#/components/schemas/recipeDescription'
+        "404":
+          description: didn't found recipes for your search.
+  /recipes/getRecipeFromClick:
+    get:
+      tags:
+      - recipes
+      summary: this method will return clicked recipe.
+      description: recipe has been returned.
+      operationId: getClickedRecipe
+      parameters:
+      - name: recipeId
+        in: query
+        description: pass an id of recipe to show
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: found results matching criteria
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/fullRecipe'
+        "404":
+          description: recipe id not found.
+  /users/addUserRecipe:
+    post:
+      tags:
+      - users
+      summary: this method will add a recipe to the DB.
+      operationId: addRecipe
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/addedRecipe'
+        required: true
+      responses:
+        "200":
+          description: Recipe was added successfully
+        "403":
+          description: couldn't register recipe to DB
+      security:
+      - cookieAuth: []
+  /users/addFavorites:
+    post:
+      tags:
+      - users
+      summary: mark recipe as liked by he user
+      operationId: addFavorite
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/favoriteRecipe'
+      responses:
+        "200":
+          description: recipes has been loaded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                  - $ref: '#/components/schemas/recipeDescription'
+        "404":
+          description: recipe not found.
+      security:
+      - cookieAuth: []
+  /users/threelastWatched:
+    get:
+      tags:
+      - users
+      summary: returns an array of recipe descreption
+      description: this method will return the 3 last watched recipes by current user
+      operationId: getLastWatched
+      responses:
+        "200":
+          description: recipes has been loaded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                  - $ref: '#/components/schemas/recipeDescription'
+        "404":
+          description: recipe not found.
+    security:
+      - cookieAuth: []
+  /users/getFavorites:
+    get:
+      tags:
+      - users
+      summary: returns an array of recipe descreption
+      description: this method will return the favorites user recipes
+      operationId: getFavorite
+      responses:
+        "200":
+          description: recipes has been loaded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                  - $ref: '#/components/schemas/recipeDescription'
+        "404":
+          description: recipe not found.
+    security:
+      - cookieAuth: []
+  /users/lastSearch:
+    get:
+      tags:
+      - users
+      summary: returns an array of recipe descreption
+      description: this method will return the favorites user recipes
+      operationId: lastSearch
+      responses:
+        "200":
+          description: return the last query of the user.
+          content:
+            application/json:
+              schema:
+                type: array
+                example:
+                - pasta
+                items:
+                  type: string
+        "404":
+          description: DB error or user is not logged in.
+    security:
+      - cookieAuth: []
+  /users/getUserRecipe:
+    get:
+      tags:
+      - users
+      summary: returns an array of recipe descreption
+      description: this method will return all recipes created by the user
+      operationId: getUserRecipe
+      responses:
+        "200":
+          description: recipes has been loaded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                  - $ref: '#/components/schemas/recipeDescription'
+        "404":
+          description: recipe not found.
+    security:
+      - cookieAuth: []
+  /users/familyRecipes:
+    get:
+      tags:
+      - users
+      summary: returns an array of recipe descreption in the family area
+      operationId: familyRecipes
+      responses:
+        "200":
+          description: recipes has been loaded.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  oneOf:
+                  - $ref: '#/components/schemas/recipeDescription'
+        "404":
+          description: DB connection error or user is not logged in.
+    security:
+      - cookieAuth: []
+  /:
+    get:
+      tags:
+      - users
+      summary: this method will return HTML, Css and Js files for the home page
+      description: Load all HTML, CSS and JS resources needed to show the websit.
+      operationId: loadPage
+      responses:
+        "200":
+          description: Load was successful
+          content:
+            application/JS:
+              schema:
+                type: object
+        "404":
+          description: Resources didnt found.
 components:
   schemas:
-    User:
+    loginBody:
       type: object
       properties:
-        username:
-          maxLength: 8
-          minLength: 3
-          type: string
-          description: username conatins between 3 to 8 letters only
-          example: my_name
-        firstname:
-          type: string
-          description: user's first name
-          example: my_first_name
-        lastname:
-          type: string
-          description: user's last name
-          example: my_last_name
-        country:
-          type: string
-          description: user's country
-          example: Israel
-        password:
-          maxLength: 10
-          minLength: 5
-          type: string
-          description: password conatins between 5 to 10 chars, at least one of them
-            is a number and a special char
-          format: password
-          example: my_name@12
-        email:
-          pattern: email
-          type: string
-          description: user's email
-          example: my_name12@gmail.com
-        # image-url:
-        #   pattern: URL
-        #   type: string
-        #   description: URL for the user's image
-        #   example: https://cloudinary.com/
-      description: Model containing user info
-    LoginScheme:
-      type: object
-      properties:
-        username:
+        userName:
           maxLength: 8
           minLength: 3
           type: string
@@ -189,42 +355,167 @@ components:
           description: password conatins at least one number and one special char
           format: password
       example:
-        username: my_name
+        userName: my_name
         password: my_name@12
-    RecipePreview:
+    logoutBody:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      example:
+        status: true
+        message: logout succeeded
+    register:
+      type: object
+      properties:
+        userName:
+          maxLength: 10
+          minLength: 3
+          type: string
+          description: userName contatins between 3 to 10 letters only
+          example: user
+        firstName:
+          type: string
+          description: user's first name
+          example: uri
+        lastName:
+          type: string
+          description: user's last name
+          example: zlot
+        country:
+          type: string
+          description: user's country
+          example: Israel
+        password:
+          maxLength: 10
+          minLength: 5
+          type: string
+          description: pasword contatins between 5 to 10 chars, at least one of them is a number and one letter.
+          format: password
+          example: yalla232
+        email:
+          type: string
+          description: user's email
+          format: email
+          example: uri@zlot.com
+      description: user info
+    addedRecipe:
+      required:
+      - extendedIngredients
+      - glutenFree
+      - id
+      - instructions
+      - readyInMinutes
+      - servings
+      - title
+      - vegan
+      - vegetarian
       type: object
       properties:
         id:
-          type: integer
-          description: recipe identifier
-          example: 102
+          type: string
+          format: recipeId
+          example: myRecipe_1234
         title:
           type: string
-          description: recipe name
-          example: Simple Macaroni and Cheese
+          example: pasta
+        readyInMinutes:
+          type: int
+          description: time to make the recipe
+          format: time
+          example: 15
+        vegan:
+          type: string
+          example: "true"
+        vegetarian:
+          type: string
+          example: "true"
+        glutenFree:
+          type: string
+          example: "true"
+        extendedIngredients:
+          type: string
+        instructions:
+          type: string
+        servings:
+          type: integer
+    recipeDescription:
+      required:
+      - wasSavedByUser
+      - glutenFree
+      - id
+      - readyInMinutes
+      - title
+      - wasWatchedByUserBefore
+      - vegan
+      - vegetarian
+      type: object
+      properties:
+        id:
+          type: int
+          format: recipeId
+          example: 1234
+        title:
+          type: string
+          example: pasta
+        readyInMinutes:
+          type: int
+          description: time to make the recipe
+          format: time
+          example: 15
         image:
           type: string
-          description: recipe image
-          format: URL
-          example: https://spoonacular.com/recipeimages/655455-566x370.jpg
-        readyInMinutes:
-          type: integer
-          description: the time takes to make this recipe
-          example: 45
+          description: image
+          example: "url"
         popularity:
-          type: integer
-          description: how many likes got this recipe
-          example: 5987
-        vegetarian:
-          type: boolean
-          description: indication if the recipe is vegetarian
-          example: false
+          type: int
+          description: likes
+          example: 15
         vegan:
-          type: boolean
-          description: indication if the recipe is vegan
-          example: false
+          type: string
+          example: "true"
+        vegetarian:
+          type: string
+          example: "true"
         glutenFree:
+          type: string
+          example: "true"
+        wasWatchedByUserBefore:
           type: boolean
-          description: indication if the recipe is gluten free
-          example: false
-  
+        wasSavedByUser:
+          type: boolean
+    cookRecipe:
+      required:
+      - extendedIngredients
+      - instructions
+      - sarving
+      type: object
+      properties:
+        extendedIngredients:
+          type: string
+          description: ingridients to make the recipe
+          example: brocolli
+        instructions:
+          type: string
+          description: instructions to make the recipe
+          example: two spoon of salt
+        sarving:
+          type: integer
+          description: The number of meals that will be created
+          format: int32
+          example: 10
+    fullRecipe:
+      allOf:
+      - $ref: '#/components/schemas/recipeDescription'
+      - $ref: '#/components/schemas/cookRecipe'
+    favoriteRecipe:
+      required:
+      - recipeId
+      type: object
+      properties:
+        recipeId:
+          type: int
+          format: recipeId
+          example: 1234

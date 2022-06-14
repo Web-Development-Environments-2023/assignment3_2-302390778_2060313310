@@ -3,8 +3,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta charset="UTF-8" />
     <title>Swagger UI</title>
-    <link rel="stylesheet" type="text/css" href="dist/swagger-ui.css" />
+    <link rel="stylesheet" type="text/css" href="./swagger-ui.css" />
     <link
       rel="icon"
       type="image/png"
@@ -39,14 +40,14 @@
   <body>
     <div id="swagger-ui"></div>
 
-    <script src="dist/swagger-ui-bundle.js" charset="UTF-8"></script>
-    <script src="dist/swagger-ui-standalone-preset.js" charset="UTF-8"></script>
-    <script src="main.js" charset="UTF-8"></script>
+    <script src="./swagger-ui-bundle.js" charset="UTF-8"></script>
+    <script src="./swagger-ui-standalone-preset.js" charset="UTF-8"></script>
+    <!-- <script src="./main.js" charset="UTF-8"></script> -->
     <script>
       window.onload = function () {
         // Begin Swagger UI call region
         const ui = SwaggerUIBundle({
-          url: "urizlotkin-Assingment3-1.0.0-resolved.yaml",
+          url: "openapi.yaml",
           dom_id: "#swagger-ui",
           deepLinking: true,
           presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
