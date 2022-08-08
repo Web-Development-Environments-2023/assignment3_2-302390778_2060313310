@@ -106,12 +106,13 @@ async function mapRecipesDetails(recipeInfo, user_id){
         title: recipeInfo.title,
         readyInMinutes: recipeInfo.readyInMinutes,
         image: recipeInfo.image,
-        popularity: recipeInfo.aggregateLikes,
+        aggregateLikes: recipeInfo.aggregateLikes,
         vegan: recipeInfo.vegan,
         vegetarian: recipeInfo.vegetarian,
         glutenFree: recipeInfo.glutenFree,
         wasWatchedByUserBefore: userHasWatch,
         wasSavedByUser: favoriterecipes,
+
     }
 }
 
@@ -210,7 +211,7 @@ async function updateThreeLastWatches(user_id, rep_id){
 async function getFullRecipe(recipeId,userId){
     let recipeInfo = await getRecipesInformation(String(recipeId));
     //  extracts attributes
-    let { id, title, readyInMinutes, aggregateLikes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients } = recipeInfo.data[0];
+    let { id, title, readyInMinutes, aggregateLikes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients, analyzedInstructions, image } = recipeInfo.data[0];
     // check if user_id watched the recipe
     let userHasWatch = true;
     const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${userId}' and recipe_id='${recipeId}'`)
@@ -229,7 +230,7 @@ async function getFullRecipe(recipeId,userId){
         id: id,
         title: title,
         readyInMinutes: readyInMinutes,
-        popularity: aggregateLikes,
+        aggregateLikes: aggregateLikes,
         vegan: vegan,
         vegetarian: vegetarian,
         wasWatchedByUserBefore: userHasWatch,
@@ -237,7 +238,9 @@ async function getFullRecipe(recipeId,userId){
         glutenFree: glutenFree,
         extendedIngredients: extendedIngredients,
         instructions: instructions,
-        servings: servings
+        analyzedInstructions: analyzedInstructions,
+        servings: servings,
+        image: image
     }
 }
 

@@ -469,7 +469,7 @@ components:
           type: string
           description: image
           example: "url"
-        popularity:
+        aggregateLikes:
           type: int
           description: likes
           example: 15
@@ -506,6 +506,13 @@ components:
           description: The number of meals that will be created
           format: int32
           example: 10
+        analyzedInstructions:
+          type: list
+          description: step by step instructions 
+          example: ["add egg", "cook in oven", "eat"],
+        image:
+          type: string
+          description: url path image of recipes
     fullRecipe:
       allOf:
       - $ref: '#/components/schemas/recipeDescription'
