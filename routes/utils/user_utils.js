@@ -55,6 +55,8 @@ async function getUserRecipes(userId){
         recipe_dict['extendedIngredients'] = userRcipes[i].extendedIngredients
         recipe_dict['instructions'] = userRcipes[i].instructions
         recipe_dict['servings'] = userRcipes[i].servings
+        recipe_dict['private'] = true
+        recipe_dict['img'] = userRcipes[i].img
         to_ret[i] = recipe_dict
     }
     return to_ret;
@@ -96,12 +98,13 @@ async function addRecipe(reqBody,userId){
             glutenFree: reqBody.glutenFree,
             extendedIngredients: reqBody.extendedIngredients,
             instructions: reqBody.instructions,
-            servings: reqBody.servings
+            servings: reqBody.servings,
+            image:  reqBody.image
         }
         let maxID = 0;
         maxID = await DButils.execQuery("SELECT MAX(id) from userRecipes;")
         await DButils.execQuery(
-        `INSERT INTO userRecipes VALUES (${maxID[0]['MAX(id)']+1} ,${userId},'${recipe.title}', ${recipe.readyInMinutes}, '${recipe.vegan}','${recipe.vegetarian}', '${recipe.glutenFree}', '${recipe.extendedIngredients}', '${recipe.instructions}', ${recipe.servings})`
+        `INSERT INTO userRecipes VALUES (${maxID[0]['MAX(id)']+1} ,${userId},'${recipe.title}', ${recipe.readyInMinutes}, '${recipe.vegan}','${recipe.vegetarian}', '${recipe.glutenFree}', '${recipe.extendedIngredients}', '${recipe.instructions}', ${recipe.servings}, '${recipe.image}')`
         );
         return true;
     }

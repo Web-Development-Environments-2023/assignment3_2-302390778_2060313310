@@ -90,13 +90,13 @@ async function searchRecipe(query,amount,cuisine,diet,intolerances) {
  */
 async function mapRecipesDetails(recipeInfo, user_id){
     let userHasWatch;
-    const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${user_id}'`)
+    const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id=${user_id} and recipe_id=${recipeInfo.id}`)
     if (userWatch.length < 1)
         userHasWatch = false;
     else
         userHasWatch = true;
     let favoriterecipes;
-    const userFavorite = await DButils.execQuery(`select user_id from favoriterecipes where user_id='${user_id}'`)
+    const userFavorite = await DButils.execQuery(`select user_id from favoriterecipes where user_id=${user_id} and recipe_id=${recipeInfo.id}`)
     if (userFavorite.length < 1)
         favoriterecipes = false;
     else
@@ -112,7 +112,7 @@ async function mapRecipesDetails(recipeInfo, user_id){
         glutenFree: recipeInfo.glutenFree,
         wasWatchedByUserBefore: userHasWatch,
         wasSavedByUser: favoriterecipes,
-
+        private: false
     }
 }
 
@@ -214,7 +214,7 @@ async function getFullRecipe(recipeId,userId){
     let { id, title, readyInMinutes, aggregateLikes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients, analyzedInstructions, image } = recipeInfo.data[0];
     // check if user_id watched the recipe
     let userHasWatch = true;
-    const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id='${userId}' and recipe_id='${recipeId}'`)
+    const userWatch = await DButils.execQuery(`select user_id from userHasWatch where user_id=${userId} and recipe_id=${recipeId}`)
     if (userWatch.length < 1 && userId != null){
         // user_id watch the recipe_id for the first time, need to update the userHasWatch table
         await DButils.execQuery(`INSERT INTO userHasWatch VALUES ('${userId}','${recipeId}')`)
@@ -222,7 +222,7 @@ async function getFullRecipe(recipeId,userId){
     await updateThreeLastWatches(userId, recipeId)
     // check if user_id liked the recipe 
     let favoriterecipes = true;
-    const userFavorite = await DButils.execQuery(`select user_id from favoriterecipes where user_id='${userId}'`)
+    const userFavorite = await DButils.execQuery(`select user_id from favoriterecipes where user_id=${userId}`)
     if (userFavorite.length < 1)
         // user_id didnt liked the recipe_id already
         favoriterecipes = false;
@@ -240,7 +240,35 @@ async function getFullRecipe(recipeId,userId){
         instructions: instructions,
         analyzedInstructions: analyzedInstructions,
         servings: servings,
-        image: image
+        image: image,
+        private: false
+    }
+}
+
+
+async function getLocalFullRecipe(recipeId,userId){
+    let recipeInfo = await DButils.execQuery(`select * from userrecipes where id= ${id}`)
+    //  extracts attributes
+    let { id, title, readyInMinutes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients,image } = recipeInfo.data[0];
+    // check if user_id watched the recipe
+    let userHasWatch = true;
+    // check if user_id liked the recipe 
+    let favoriterecipes = true;
+    return {
+        id: id,
+        title: title,
+        readyInMinutes: readyInMinutes,
+        aggregateLikes: 1,
+        vegan: vegan,
+        vegetarian: vegetarian,
+        wasWatchedByUserBefore: userHasWatch,
+        wasSavedByUser: favoriterecipes,
+        glutenFree: glutenFree,
+        extendedIngredients: extendedIngredients,
+        instructions: instructions,
+        servings: servings,
+        image: image,
+        private: true
     }
 }
 
@@ -286,4 +314,5 @@ exports.getFullRecipe = getFullRecipe;
 exports.getSearchRecipe = getSearchRecipe;
 exports.getRecipesInformation = getRecipesInformation;
 exports.getRecipesDetails = getRecipesDetails;
+exports.getLocalFullRecipe = getLocalFullRecipe;
 

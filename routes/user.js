@@ -42,6 +42,8 @@ router.post('/addFavorites', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
     const recipe_id = req.body.recipeId;
+    console.log(user_id)
+    console.log(recipe_id)
     alresdyLiked = await DButils.execQuery(`SELECT * from FavoriteRecipes where user_id = ${user_id} and recipe_id = ${recipe_id}`);
     if (alresdyLiked.length == 1)
       throw { status: 403, message: "User already markd this recipe as favorite!" };
@@ -76,7 +78,7 @@ router.get('/lastSearch', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
     const recipes_ids = await user_utils.getThreelastWatched(user_id);
-    const results = await recipe_utils.getRecipesDetails(recipes_ids)
+    const results = await recipe_utils.getRecipesDetails(recipes_ids,user_id)
     res.status(200).send(results);
   } catch(error){
     next(error); 
@@ -89,8 +91,9 @@ router.get('/lastSearch', async (req,res,next) => {
  router.get('/getFavorites', async (req,res,next) => {
   try{
     const user_id = req.session.user_id;
+    console.log(user_id)
     const recipes_ids = await user_utils.getFavoriteRecipes(user_id);
-    const results = await recipe_utils.getRecipesDetails(recipes_ids)
+    const results = await recipe_utils.getRecipesDetails(recipes_ids,user_id)
     res.status(200).send(results);
   } catch(error){
     next(error); 
@@ -122,6 +125,17 @@ router.get('/familyRecipes', async (req,res,next) => {
     res.status(200).send(results);
   } catch(error){
     next(error); 
+  }
+});
+
+
+router.get("/getLocalRecipeFromClick", async (req, res, next) => {
+  try{
+  const recipe = await recipes_utils.getLocalFullRecipe(parseInt(req.query.recipeId),req.session.user_id);
+  res.status(200).send({ message: recipe, success: true });
+  }
+  catch(error){
+    res.status(404).send({ message: "recipe id not found", success: false });
   }
 });
 

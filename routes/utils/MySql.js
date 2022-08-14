@@ -6,8 +6,8 @@ const config={
 connectionLimit:4,
   host: "localhost",//"localhost"
   user: "root",//"root"
-  password: "password",
-  database:"mydb"
+  password: "YES",
+  database:"wikirecipe"
 }
 const pool = new mysql.createPool(config);
 
