@@ -247,9 +247,9 @@ async function getFullRecipe(recipeId,userId){
 
 
 async function getLocalFullRecipe(recipeId,userId){
-    let recipeInfo = await DButils.execQuery(`select * from userrecipes where id= ${id}`)
+    let recipeInfo = await DButils.execQuery(`select * from userrecipes where id= ${recipeId}`)
     //  extracts attributes
-    let { id, title, readyInMinutes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients,image } = recipeInfo.data[0];
+    let { id, title, readyInMinutes, vegan,vegetarian, glutenFree,instructions,servings,extendedIngredients,image } = recipeInfo[0];
     // check if user_id watched the recipe
     let userHasWatch = true;
     // check if user_id liked the recipe 
@@ -276,9 +276,10 @@ async function getLocalFullRecipe(recipeId,userId){
  * This function returns the preview information of a X searched recipes (by a given query).
  */
 async function getSearchRecipe(req,userId){
-    let number = 5
     if(userId!=null){ await updateLastSearch(req, userId)}
-    let recipesInfo = await searchRecipe(req.query,number,req.cuisine,req.diet,req.intolerances);
+    let recipesInfo = await searchRecipe(req.query,parseInt(req.amount),req.cuisine,req.diet,req.intolerances);
+    console.log(recipesInfo.data.results.length)
+    console.log(recipesInfo.data.results)
     recipesInfo = recipesInfo.data.results.map(x => x.id)
     let string_ids = ""
     let c = ','

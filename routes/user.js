@@ -29,8 +29,8 @@ router.use(async function (req, res, next) {
  */
  router.post("/addUserRecipe", async (req, res, next) => {
   const succeeded = await user_utils.addRecipe(req.body,req.session.user_id);
-  if (succeeded)
-    res.status(201).send({ message: "recipe was added", success: true });
+  if (succeeded != false)
+    res.status(201).send({ message: succeeded, success: true });
   else
     res.status(403).send({ message: "couldn`t add recipe to DB", success: false });
 });
@@ -131,11 +131,11 @@ router.get('/familyRecipes', async (req,res,next) => {
 
 router.get("/getLocalRecipeFromClick", async (req, res, next) => {
   try{
-  const recipe = await recipes_utils.getLocalFullRecipe(parseInt(req.query.recipeId),req.session.user_id);
-  res.status(200).send({ message: recipe, success: true });
+    const recipe = await recipe_utils.getLocalFullRecipe(parseInt(req.query.recipeId),req.session.user_id);
+    res.status(200).send({ message: recipe, success: true });
   }
   catch(error){
-    res.status(404).send({ message: "recipe id not found", success: false });
+    res.status(404).send({ message: error, success: false });
   }
 });
 

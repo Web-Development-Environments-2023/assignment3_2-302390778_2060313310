@@ -104,9 +104,9 @@ async function addRecipe(reqBody,userId){
         let maxID = 0;
         maxID = await DButils.execQuery("SELECT MAX(id) from userRecipes;")
         await DButils.execQuery(
-        `INSERT INTO userRecipes VALUES (${maxID[0]['MAX(id)']+1} ,${userId},'${recipe.title}', ${recipe.readyInMinutes}, '${recipe.vegan}','${recipe.vegetarian}', '${recipe.glutenFree}', '${recipe.extendedIngredients}', '${recipe.instructions}', ${recipe.servings}, '${recipe.image}')`
+        `INSERT INTO userrecipes VALUES (${maxID[0]['MAX(id)']+1} ,${userId},'${recipe.title}', ${recipe.readyInMinutes}, '${recipe.vegan}','${recipe.vegetarian}', '${recipe.glutenFree}', '${recipe.extendedIngredients}', '${recipe.instructions}', ${recipe.servings}, '${recipe.image}')`
         );
-        return true;
+        return maxID[0]['MAX(id)']+1;
     }
     catch (error) {
         return false;
