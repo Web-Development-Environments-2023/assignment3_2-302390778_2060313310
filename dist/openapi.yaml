@@ -13,7 +13,7 @@ servers:
 # local:
 - url: "http://127.0.0.1:3000"
 # remote:
-# - url: "http://132.72.65.211"
+# - url: "https://wikirecipe.cs.bgu.ac.il/"
   description: SwaggerHub API Auto Mocking hey
 tags:
 - name: auth
